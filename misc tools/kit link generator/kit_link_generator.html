@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kit Link Generator</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#121a2b; --text:#e6ecff; --muted:#9db0d1; --accent:#5ac8fa; --border:#223154; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--text); }
+    .container { max-width: 760px; margin: 48px auto; padding: 0 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    p.hint { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    label { display:block; font-weight: 600; margin: 16px 0 8px; }
+    input[type="text"], textarea { width: 100%; background: #0f1626; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 16px; outline: none; }
+    input[type="text"]:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(90,200,250,0.15); }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .btn { background: var(--accent); color: #041019; border: none; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .output { display:flex; gap:10px; align-items:center; margin-top: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .footer { margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Kit Link Generator</h1>
+      <p class="hint">Enter a post title. We'll generate a URL like <span class="mono">https://queen-of-questions.kit.com/posts/your-title-here</span>.</p>
+
+      <label for="title">Post title</label>
+      <input id="title" type="text" placeholder="e.g., I'm a tech lead..." autocomplete="off" />
+
+      <div class="footer">
+        <div class="muted">Rules: remove punctuation, replace apostrophes with hyphens, lowercase, separate words with hyphens.</div>
+      </div>
+
+      <label for="url" style="margin-top:18px;">Generated URL</label>
+      <div class="output">
+        <input id="url" class="mono" type="text" readonly />
+        <button id="copy" class="btn" type="button">Copy</button>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="clear" class="btn secondary" type="button">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const BASE = 'https://queen-of-questions.kit.com/posts/';
+      const $title = document.getElementById('title');
+      const $url = document.getElementById('url');
+      const $copy = document.getElementById('copy');
+      const $clear = document.getElementById('clear');
+
+      function generateSlug(input){
+        if (!input) return '';
+        let s = String(input).trim();
+        // 1) Replace apostrophes (straight and curly) with hyphens
+        s = s.replace(/[\'’]+/g, '-');
+        // 2) Remove all remaining punctuation (keep letters, numbers, spaces, and hyphens)
+        s = s.replace(/[^A-Za-z0-9\s-]+/g, '');
+        // 3) Lowercase
+        s = s.toLowerCase();
+        // 4) Collapse all whitespace to single spaces
+        s = s.replace(/\s+/g, ' ').trim();
+        // 5) Replace spaces with hyphens
+        s = s.replace(/\s/g, '-');
+        // 6) Collapse multiple hyphens
+        s = s.replace(/-+/g, '-');
+        // 7) Trim leading/trailing hyphens
+        s = s.replace(/^-+|-+$/g, '');
+        return s;
+      }
+
+      function update(){
+        const slug = generateSlug($title.value);
+        $url.value = slug ? (BASE + slug) : '';
+      }
+
+      $title.addEventListener('input', update);
+      $title.addEventListener('change', update);
+
+      $copy.addEventListener('click', async () => {
+        if (!$url.value) return;
+        try {
+          await navigator.clipboard.writeText($url.value);
+          $copy.textContent = 'Copied!';
+          setTimeout(() => ($copy.textContent = 'Copy'), 1200);
+        } catch (e) {
+          // Fallback
+          $url.select();
+          document.execCommand('copy');
+        }
+      });
+
+      $clear.addEventListener('click', () => {
+        $title.value = '';
+        update();
+        $title.focus();
+      });
+
+      // Example to show behavior on load (optional):
+      // $title.value = "I'm a tech lead, but my senior devs have better technical skills. Am I losing my edge?";
+      // update();
+
+      // Autofocus
+      $title.focus();
+    })();
+  </script>
+</body>
+</html>
